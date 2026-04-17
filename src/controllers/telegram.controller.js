@@ -50,6 +50,27 @@ exports.webhook = async (req, res) => {
   }
 };
 
+// Check Telegram Status
+exports.checkStatus = async (req, res) => {
+  try {
+    const { empId } = req.params;
+
+    const user = await User.findOne({ empId });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      empId: user.empId,
+      telegramLinked: !!user.telegramId,
+      telegramId: user.telegramId || null,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Send to USER
 exports.sendToUser = async (req, res) => {
   try {
