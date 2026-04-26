@@ -9,17 +9,22 @@ const {
 // LOGIN
 exports.login = async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    
     const { login, password } = req.body;
 
     const user = await User.findOne({
       $or: [{ empId: login }, { username: login }],
     });
 
+    console.log("DB user:", user);
+
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatch);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
@@ -31,12 +36,15 @@ exports.login = async (req, res) => {
       username: user.username,
     };
 
+    console.log("Login success");
+
     res.json({
       accessToken: generateAccessToken(payload),
       refreshToken: generateRefreshToken(payload),
       user,
     });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: err.message });
   }
 };
