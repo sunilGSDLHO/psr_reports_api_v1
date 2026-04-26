@@ -5,6 +5,7 @@ const {
   generateRefreshToken,
   verifyRefreshToken,
 } = require("../services/token.service");
+const jwt = require("jsonwebtoken");
 
 // LOGIN
 exports.login = async (req, res) => {
@@ -59,7 +60,7 @@ exports.login = async (req, res) => {
       refreshToken,
       user
     });
-    
+
     // res.json({
     //   accessToken: generateAccessToken(payload),
     //   refreshToken: generateRefreshToken(payload),

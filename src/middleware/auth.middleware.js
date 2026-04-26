@@ -1,4 +1,5 @@
 const { verifyAccessToken } = require("../services/token.service");
+const jwt = require("jsonwebtoken");
 
 exports.authenticate = (req, res, next) => {
   const authHeader = req.headers["authorization"];
