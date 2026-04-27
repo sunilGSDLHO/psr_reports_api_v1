@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const { sendMessage } = require("../services/telegram.service");
+const axios = require("axios");
 
 exports.webhook = async (req, res) => {
   try {
@@ -100,5 +101,95 @@ exports.sendToGroup = async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
+
+const TELEGRAM_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+exports.checkUserGroup = async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+
+    if (!telegramId) {
+      return res.status(400).json({ message: "telegramId is required" });
+    }
+
+    const url = `${TELEGRAM_BASE}/getChatMember`;
+
+    const response = await axios.get(url, {
+      params: {
+        chat_id: CHAT_ID,
+        user_id: telegramId,
+      },
+    });
+
+    if (response.data.ok) {
+      const status = response.data.result.status;
+
+      const isMember = ["member", "administrator", "creator"].includes(status);
+
+      return res.json({
+        success: true,
+        isMember,
+        status,
+      });
+    }
+
+    return res.json({
+      success: false,
+      isMember: false,
+    });
+
+  } catch (error) {
+    // Telegram returns 400 if user not in group
+    if (error.response && error.response.status === 400) {
+      return res.json({
+        success: true,
+        isMember: false,
+        status: "not_member",
+      });
+    }
+
+    console.error("checkUserGroup Error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check group",
+    });
+  }
+};
+
+exports.joinGroupLink = async (req, res) => {
+  try {
+    const url = `${TELEGRAM_BASE}/exportChatInviteLink`;
+
+    const response = await axios.get(url, {
+      params: {
+        chat_id: CHAT_ID,
+      },
+    });
+
+    if (response.data.ok) {
+      return res.json({
+        success: true,
+        inviteLink: response.data.result,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate link",
+    });
+
+  } catch (error) {
+    console.error("joinGroupLink Error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get invite link",
+    });
   }
 };
